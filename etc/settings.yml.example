@@ -1,0 +1,38 @@
+defaults: &defaults
+  host: 'accounts.brazos.tamu.edu'
+  https: true
+  api_auth_token: 'CHANGEME'
+  account_home: &default_account_home
+    server: 'fs01.brazos.tamu.edu'
+    server_fs: 'tank/home'
+    quota: '10G'
+    base_dir: '/home'
+    scratch_base: '/fdata/scratch'
+    bashrc_lines:
+      - '[ -f /etc/bash.bashrc ] && . /etc/bash.bashrc'
+      - '[ -f /etc/bashrc ] && . /etc/bashrc'
+      - 'umask 077'
+    bash_profile_lines:
+      - '[ -f ~/.bashrc ] && . ~/.bashrc'
+    extra_scratch_directories:
+      - '/fdata/iamcs'
+      - '/fdata/mdata/atmo'
+      - '/fdata/parallel1'
+      - '/fdata/parallel3'
+      - '/fdata/parallel6'
+    cleanup_exclude:
+      - 'treydock-test1'
+
+development:
+  <<: *defaults
+  host: 'accounts-dev.brazos.tamu.edu'
+  account_home:
+    <<: *default_account_home
+    base_dir: '/tmp/home'
+    scratch_base: '/tmp/fdata/scratch'
+
+test:
+  <<: *defaults
+
+production:
+  <<: *defaults

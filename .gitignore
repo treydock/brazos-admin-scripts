@@ -1,0 +1,8 @@
+*.pyc
+
+# CONFIGS
+etc/settings.yml
+
+# Directories used for input/output
+input/*
+output/*
