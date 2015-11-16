@@ -43,9 +43,9 @@ args = parser.parse_args()
 
 cmd = [	"sacct", "--allusers", "--parsable2", "--noheader", "--allocations", "--clusters", "brazos" ]
 if args.account:
-    cmd += "--accounts=%s" % args.account
+    cmd += ["--accounts=%s" % args.account]
 if args.user:
-    cmd += "--user=%s" % args.user
+    cmd += ["--user=%s" % args.user]
 cmd += [
     "--format", "elapsed,ncpus",
     "--state", "CANCELLED,COMPLETED,FAILED,NODE_FAIL,PREEMPTED,TIMEOUT",
