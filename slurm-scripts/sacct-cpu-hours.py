@@ -6,6 +6,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 from calendar import monthrange
 import time
+import dateutil.parser
 import os, sys, re
 
 def slurm_time_to_sec(t, debug=False):
@@ -27,6 +28,12 @@ def slurm_time_to_sec(t, debug=False):
 
     return sec
 
+def cmp_start_end_time(start, end, debug=False):
+    _start = dateutil.parser.parse(start)
+    _end = dateutil.parser.parse(end)
+    _cmp = (_end-_start).total_seconds()
+    return _cmp
+
 TODAY = date.today()
 LAST_MONTH = TODAY - relativedelta(months=1)
 LAST_DAY_OF_MONTH=monthrange(LAST_MONTH.year, LAST_MONTH.month)[1]
@@ -38,6 +45,7 @@ parser.add_argument('--account', help="SLURM account", default=None)
 parser.add_argument('--user', help="SLURM user", default=None)
 parser.add_argument('--start', help="sacct starttime", default=DEFAULT_STARTTIME)
 parser.add_argument('--end', help="sacct endtime", default=DEFAULT_ENDTIME)
+parser.add_argument('--calc2', help="calculate using end-start times", action="store_true", default=False)
 parser.add_argument('--debug', help="debug output", action="store_true", default=False)
 args = parser.parse_args()
 
@@ -47,7 +55,7 @@ if args.account:
 if args.user:
     cmd += ["--user=%s" % args.user]
 cmd += [
-    "--format", "elapsed,ncpus",
+    "--format", "elapsed,ncpus,start,end",
     "--state", "CANCELLED,COMPLETED,FAILED,NODE_FAIL,PREEMPTED,TIMEOUT",
 	"--starttime", args.start,
 	"--endtime", args.end,
@@ -69,7 +77,10 @@ for line in out.split(os.linesep):
         continue
     _data = _line.split("|")
     if args.debug: print "_data: %s" % _data
-    _elapsed_sec = slurm_time_to_sec(t=_data[0], debug=args.debug)
+    if args.calc2:
+        _elapsed_sec = cmp_start_end_time(start=_data[2], end=_data[3], debug=args.debug)
+    else:
+        _elapsed_sec = slurm_time_to_sec(t=_data[0], debug=args.debug)
     _hours = float(_elapsed_sec) / 3600.0
     _ncpus = int(_data[1])
     _cpu_hours = _hours * float(_ncpus)
