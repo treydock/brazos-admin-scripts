@@ -29,10 +29,16 @@ def slurm_time_to_sec(t, debug=False):
     return sec
 
 def cmp_start_end_time(start, end, debug=False):
-    _start = dateutil.parser.parse(start)
-    _end = dateutil.parser.parse(end)
-    _cmp = (_end-_start).total_seconds()
-    return _cmp
+    _start = dateutil.parser.parse(start).strftime("%s")
+    _end = dateutil.parser.parse(end).strftime("%s")
+    _sec = int(_end) - int(_start)
+    return _sec
+
+def cmp_start_end_suspended_time(start, end, suspend, debug=False):
+    _end_start_sec = cmp_start_end_time(start=start, end=end, debug=debug)
+    _suspend = slurm_time_to_sec(t=suspend, debug=debug)
+    _sec = int(_end_start_sec) - int(_suspend)
+    return _sec
 
 TODAY = date.today()
 LAST_MONTH = TODAY - relativedelta(months=1)
@@ -46,6 +52,7 @@ parser.add_argument('--user', help="SLURM user", default=None)
 parser.add_argument('--start', help="sacct starttime", default=DEFAULT_STARTTIME)
 parser.add_argument('--end', help="sacct endtime", default=DEFAULT_ENDTIME)
 parser.add_argument('--calc2', help="calculate using end-start times", action="store_true", default=False)
+parser.add_argument('--calc3', help="calculate using end-start times minus suspended time", action="store_true", default=False)
 parser.add_argument('--debug', help="debug output", action="store_true", default=False)
 args = parser.parse_args()
 
@@ -55,7 +62,7 @@ if args.account:
 if args.user:
     cmd += ["--user=%s" % args.user]
 cmd += [
-    "--format", "elapsed,ncpus,start,end",
+    "--format", "elapsed,ncpus,start,end,suspended",
     "--state", "CANCELLED,COMPLETED,FAILED,NODE_FAIL,PREEMPTED,TIMEOUT",
 	"--starttime", args.start,
 	"--endtime", args.end,
@@ -79,6 +86,8 @@ for line in out.split(os.linesep):
     if args.debug: print "_data: %s" % _data
     if args.calc2:
         _elapsed_sec = cmp_start_end_time(start=_data[2], end=_data[3], debug=args.debug)
+    elif args.calc3:
+        _elapsed_sec = cmp_start_end_suspended_time(start=_data[2], end=_data[3], suspend=_data[4], debug=args.debug)
     else:
         _elapsed_sec = slurm_time_to_sec(t=_data[0], debug=args.debug)
     _hours = float(_elapsed_sec) / 3600.0
