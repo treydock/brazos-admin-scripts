@@ -56,7 +56,7 @@ else:
     if args.account:
         cmd += ["--accounts=%s" % args.account]
     cmd += [
-        "--format", "user,elapsed,ncpus,start,end,suspended",
+        "--format", "user,account,elapsed,ncpus,start,end,suspended",
         "--state", "CANCELLED,COMPLETED,FAILED,NODE_FAIL,PREEMPTED,TIMEOUT",
     	"--starttime", args.start,
     	"--endtime", args.end,
@@ -76,14 +76,15 @@ for line in out.split(os.linesep):
     _data = _line.split("|")
     if args.debug: print "_data: %s" % _data
     if args.calc2:
-        _elapsed_sec = cmp_start_end_time(start=_data[3], end=_data[4], debug=args.debug)
+        _elapsed_sec = cmp_start_end_time(start=_data[4], end=_data[5], debug=args.debug)
     elif args.calc3:
-        _elapsed_sec = cmp_start_end_suspended_time(start=_data[3], end=_data[4], suspend=_data[5], debug=args.debug)
+        _elapsed_sec = cmp_start_end_suspended_time(start=_data[4], end=_data[5], suspend=_data[6], debug=args.debug)
     else:
-        _elapsed_sec = slurm_duration_to_sec(t=_data[1], debug=args.debug)
+        _elapsed_sec = slurm_duration_to_sec(t=_data[2], debug=args.debug)
     _username = _data[0]
+    _account = _data[1]
     _hours = Decimal(str(_elapsed_sec)) / Decimal('3600.0')
-    _ncpus = Decimal(_data[2])
+    _ncpus = Decimal(_data[3])
     _cpu_hours = _hours * _ncpus
     if args.debug: print "H: %f C: %d - CH: %f" % (_hours, _ncpus, _cpu_hours)
     if _username in users:
@@ -93,6 +94,7 @@ for line in out.split(os.linesep):
     else:
         _user = {}
         _user['username'] = _username
+        _user['account'] = _account
         _user['cpu_hours'] = _cpu_hours
         _user['num_jobs'] = 1
     users[_username] = _user
@@ -100,13 +102,40 @@ for line in out.split(os.linesep):
 data = users.values()
 cpu_hours_total = Decimal('0.0')
 num_jobs_total = 0
+accounts = {}
 
-table = prettytable.PrettyTable(["Username", "CPU Hours", "Completed Jobs"])
+table = prettytable.PrettyTable(["Username", "Account", "CPU Hours", "Completed Jobs"])
 table.hrules = prettytable.FRAME
+
+# Display user usage and collect usage used to display account data
 for d in sorted(data, key=lambda k: k['cpu_hours'], reverse=True):
-    table.add_row([d['username'], int(round(d['cpu_hours'], 0)), d['num_jobs']])
-    cpu_hours_total += d['cpu_hours']
-    num_jobs_total += d['num_jobs']
-table.add_row(['', '', ''])
-table.add_row(['Total', int(round(cpu_hours_total, 0)), num_jobs_total])
+    _account = d['account']
+    _cpu_hours = d['cpu_hours']
+    _num_jobs = d['num_jobs']
+    table.add_row([d['username'], _account, int(round(_cpu_hours, 0)), _num_jobs])
+    cpu_hours_total += _cpu_hours
+    num_jobs_total += _num_jobs
+    if _account in accounts:
+        accounts[_account]['cpu_hours'] += _cpu_hours
+        accounts[_account]['num_jobs'] += _num_jobs
+    else:
+        account = {}
+        accounts[_account] = {}
+        accounts[_account]['account'] = _account
+        accounts[_account]['cpu_hours'] = _cpu_hours
+        accounts[_account]['num_jobs'] = _num_jobs
+table.add_row(['', '', '', ''])
+
+# Collect and display data about account(s) usage
+account_data = accounts.values()
+for account in sorted(account_data, key=lambda k: k['cpu_hours'], reverse=True):
+    _cpu_hours = account['cpu_hours']
+    _num_jobs = account['num_jobs']
+    _percent = (_cpu_hours / cpu_hours_total) * Decimal('100.0')
+    _percent = round(_percent, 1)
+    _cpu_hours_percent = "%s (%s%%)" % (str(round(_cpu_hours, 0)), str(_percent))
+    table.add_row(['Total', account['account'], _cpu_hours_percent, _num_jobs])
+
+# Display cluster or account total, depending if --account was used
+table.add_row(['Total', '', int(round(cpu_hours_total, 0)), num_jobs_total])
 print table
