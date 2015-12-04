@@ -9,6 +9,7 @@ import time
 import dateutil.parser
 import os, sys, re
 from decimal import Decimal
+import prettytable
 
 BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(BASE_DIR)
@@ -34,7 +35,6 @@ DEFAULT_ENDTIME="%s-%s-%sT23:59:59" % (LAST_MONTH.year, LAST_MONTH.month, LAST_D
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--account', help="SLURM account", default=None)
-parser.add_argument('--user', help="SLURM user", default=None)
 parser.add_argument('--start', help="sacct starttime", default=DEFAULT_STARTTIME)
 parser.add_argument('--end', help="sacct endtime", default=DEFAULT_ENDTIME)
 parser.add_argument('--calc2', help="calculate using end-start times", action="store_true", default=False)
@@ -49,14 +49,14 @@ if args.file:
         sys.exit(1)
     with open(args.file, 'r') as file:
         out = file.read()
-else:
-    cmd = [	"sacct", "--allusers", "--parsable2", "--noheader", "--allocations", "--clusters", "brazos" ]
+else:    
+    cmd = [
+        "sacct", "--allusers", "--parsable2", "--noheader", "--allocations", "--clusters", "brazos",
+    ]
     if args.account:
         cmd += ["--accounts=%s" % args.account]
-    if args.user:
-        cmd += ["--user=%s" % args.user]
     cmd += [
-        "--format", "elapsed,ncpus,start,end,suspended",
+        "--format", "user,elapsed,ncpus,start,end,suspended",
         "--state", "CANCELLED,COMPLETED,FAILED,NODE_FAIL,PREEMPTED,TIMEOUT",
     	"--starttime", args.start,
     	"--endtime", args.end,
@@ -64,11 +64,10 @@ else:
     cmd_str = " ".join(cmd)
     print cmd_str
 
-cpu_hours = Decimal('0.0')
+    process = Popen(cmd, stdout=PIPE)
+    out, err = process.communicate()
 
-process = Popen(cmd, stdout=PIPE)
-out, err = process.communicate()
-
+users = {}
 for line in out.split(os.linesep):
     _line =  line.strip()
     if args.debug: print "_line: %s" % _line
@@ -77,15 +76,37 @@ for line in out.split(os.linesep):
     _data = _line.split("|")
     if args.debug: print "_data: %s" % _data
     if args.calc2:
-        _elapsed_sec = cmp_start_end_time(start=_data[2], end=_data[3], debug=args.debug)
+        _elapsed_sec = cmp_start_end_time(start=_data[3], end=_data[4], debug=args.debug)
     elif args.calc3:
-        _elapsed_sec = cmp_start_end_suspended_time(start=_data[2], end=_data[3], suspend=_data[4], debug=args.debug)
+        _elapsed_sec = cmp_start_end_suspended_time(start=_data[3], end=_data[4], suspend=_data[5], debug=args.debug)
     else:
-        _elapsed_sec = slurm_duration_to_sec(t=_data[0], debug=args.debug)
+        _elapsed_sec = slurm_duration_to_sec(t=_data[1], debug=args.debug)
+    _username = _data[0]
     _hours = Decimal(str(_elapsed_sec)) / Decimal('3600.0')
-    _ncpus = Decimal(_data[1])
+    _ncpus = Decimal(_data[2])
     _cpu_hours = _hours * _ncpus
     if args.debug: print "H: %f C: %d - CH: %f" % (_hours, _ncpus, _cpu_hours)
-    cpu_hours = cpu_hours + _cpu_hours
+    if _username in users:
+        _user = users[_username]
+        _user['cpu_hours'] += _cpu_hours
+        _user['num_jobs'] += 1
+    else:
+        _user = {}
+        _user['username'] = _username
+        _user['cpu_hours'] = _cpu_hours
+        _user['num_jobs'] = 1
+    users[_username] = _user
 
-print "CPU HOURS: %d" % int(round(cpu_hours, 0))
+data = users.values()
+cpu_hours_total = Decimal('0.0')
+num_jobs_total = 0
+
+table = prettytable.PrettyTable(["Username", "CPU Hours", "Completed Jobs"])
+table.hrules = prettytable.FRAME
+for d in sorted(data, key=lambda k: k['cpu_hours'], reverse=True):
+    table.add_row([d['username'], int(round(d['cpu_hours'], 0)), d['num_jobs']])
+    cpu_hours_total += d['cpu_hours']
+    num_jobs_total += d['num_jobs']
+table.add_row(['', '', ''])
+table.add_row(['Total', int(round(cpu_hours_total, 0)), num_jobs_total])
+print table

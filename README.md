@@ -38,6 +38,17 @@ Run actual removal
 
 ### SLURM Scripts
 
+##### `sacct-account-summary.py`
+
+Report on CPU hours for cluster or account for given amount of time.  Default is previous month.
+
+    ./slurm-scripts/sacct-account-summary.py
+
+Report on CPU hours for previous month for a specific account
+
+    ./slurm-scripts/sacct-account-summary.py --account hepx
+
+
 ##### `sacct-cpu-hours.py`
 
 Report on CPU hours used for given amount of time.  Default is previous month.
