@@ -3,7 +3,7 @@
 import argparse
 import os, sys, stat
 import logging
-from pwd import getpwuid
+from pwd import getpwuid, getpwnam
 import paramiko
 import requests
 import json
@@ -294,6 +294,14 @@ def main():
         _username = account["username"]
         if _username in _cleanup_exclude:
             logger.info("EXCLUDED: %s", _username)
+            continue
+        try:
+            _shell = getpwnam(_username).pw_shell
+        except KeyError:
+            logger.warn("Unable to get shell for %s", _username)
+            _shell = None
+        if _shell != '/sbin/nologin':
+            logger.warn("User %s shell %s != /sbin/nologin", _username, _shell)
             continue
 
         _account_home = AccountHome(username=_username, config=_account_home_config, options=options)
