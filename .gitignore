@@ -6,3 +6,6 @@ etc/settings.yml
 # Directories used for input/output
 input/*
 output/*
+
+# Ignore files produced by GUMS commands
+*.log

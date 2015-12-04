@@ -4,9 +4,12 @@
     * [Maintenance Scripts](#maintenance-scripts)
         * [cleanup_disabled_accounts.py](#cleanup_disabled_accountspy)
     * [SLURM Scripts](#slurm-scripts)
+        * [sacct-account-summary.py](#sacct-account-summarypy)
         * [sacct-cpu-hours.py](#sacct-cpu-hourspy)
     * [OSG Scripts](#osg-scripts)
         * [check-ce-se.sh](#check-ce-sesh)
+        * [gums-check-dn.sh](#gums-check-dnsh)
+        * [gums-find-by-username.sh](#gums-find-by-usernamesh)
     * [Node Scripts](#node-scripts)
         * [update_slurm.sh](#update_slurmsh)
 
@@ -73,6 +76,22 @@ Run sanity checks against an OSG CE and SE.  The following items are tested
 Example usage:
 
     ./osg-scripts/check-ce-se.sh --ce ce01.brazos.tamu.edu --se srm.brazos.tamu.edu
+
+##### `gums-check-dn.sh`
+
+Check that the provided DN and username is mapped in GUMS
+
+Example usage:
+
+    ./osg-scripts/gums-check-dn.sh 'DN HERE' USERNAME
+
+##### `gums-find-by-username.sh`
+
+Find a GUMS mapped DN by username
+
+Example usage:
+
+    ./osg-scripts/gums-find-by-username.sh USERNAME
 
 ### Node Scripts
 
