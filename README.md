@@ -12,6 +12,7 @@
         * [gums-find-by-username.sh](#gums-find-by-usernamesh)
     * [Node Scripts](#node-scripts)
         * [update_slurm.sh](#update_slurmsh)
+        * [sync_slurm_conf.sh](#sync_slurm_confsh)
 
 ## Install
 
@@ -100,3 +101,9 @@ Example usage:
 Update SLURM on compute nodes and restart SLURM service.  Intended to be run via parallel SSH programs like clush
 
       clush -g all -b '/path/to/node-scripts/update_slurm.sh'
+
+##### `sync_slurm_conf.sh`
+
+Update SLURM config files from shared location.  Updates slurm.conf, nodes.conf, partitions.conf and cgroup.conf.
+
+    clush -g all -b '/path/to/node-scripts/sync_slurm_conf.sh /home/admin/etc/slurm-node'
