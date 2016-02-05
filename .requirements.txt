@@ -1,0 +1,11 @@
+cryptography==0.8.2
+pyopenssl
+ndg-httpsclient
+pyasn1
+argparse==1.2.1
+pyyaml==3.10
+prettytable==0.7.2
+paramiko==1.7.5
+requests==2.6.0
+python-ldap==2.3.13
+sh==1.02

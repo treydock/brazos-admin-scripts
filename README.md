@@ -3,6 +3,7 @@
 * [Usage](#usage)
     * [Maintenance Scripts](#maintenance-scripts)
         * [cleanup_disabled_accounts.py](#cleanup_disabled_accountspy)
+        * [change-primary-group.py](#change-primary-grouppy)
     * [SLURM Scripts](#slurm-scripts)
         * [sacct-account-summary.py](#sacct-account-summarypy)
         * [sacct-cpu-hours.py](#sacct-cpu-hourspy)
@@ -19,6 +20,11 @@
 Rename the following files and update their config values:
 
     cp etc/settings.yml.example etc/settings.yml
+
+Scripts that use Python and SSL do not work with available libraries for doing SSL verification when SNI is used, so a virtualenv must be setup
+
+    virtualenv --no-site-packages ./python-env
+    ./python-env/bin/pip install -r ./.requirements.txt
 
 ## Usage
 
@@ -39,6 +45,23 @@ Run through removal without actually removing anything
 Run actual removal
 
     ./maintenance-scripts/cleanup_disabled_accounts.py
+
+##### `change-primary-group.py`
+
+Changes the primary GID of an account.  This will perform the following updates
+
+* Set correct primary_group in account management application
+* Set proper gidNumber for user in LDAP
+* Remove user's DN from uniqueMember of old group
+* Add user's DN to uniqueMember of new group
+* Remove old user's SLURM record associating them to old group/account
+* Add user's SLURM record associating them to new group/account
+* find /home/$user -group $oldgroup -exec chgrp $newgroup {] \;
+* find /fdata/scratch/$user -group $oldgroup -exec chgrp $newgroup {] \;
+
+Example execution:
+
+    ./python-env/bin/python ./maintenance-scripts/change-primary-group.py --username treydock-test1 --new-group general --old-group acad1
 
 ### SLURM Scripts
 

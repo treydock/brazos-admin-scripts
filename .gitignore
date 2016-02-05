@@ -9,3 +9,6 @@ output/*
 
 # Ignore files produced by GUMS commands
 *.log
+
+# Ignore virtualenv
+python-env/*
