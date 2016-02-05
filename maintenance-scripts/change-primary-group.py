@@ -28,6 +28,7 @@ def main():
 
     config = load_config()
     config_env = config[args.config_env]["ldap"]
+    _account_home_config = config[args.config_env].get("account_home")
     _auth_token = config[args.config_env].get("api_auth_token")
     _host = config[args.config_env].get("host")
     _port = config[args.config_env].get("port")
@@ -148,19 +149,19 @@ def main():
         logger.info("LDAP replace %s gidNumber=%s", ldap_user.dn, ldap_group_new.gidNumber)
         local_ldap.modify(ldap_user.dn, [(ldap.MOD_REPLACE, 'gidNumber', ldap_group_new.gidNumber)])
     else:
-        logger.info("Skipping LDAP update of user gidNumber - already updated")
+        logger.warn("Skipping LDAP update of user gidNumber - already updated")
 
     if ldap_user.dn not in ldap_group_new.uniqueMember:
         logger.info("LDAP add to %s uniqueMember=%s", ldap_group_new.dn, ldap_user.dn)
         local_ldap.modify(ldap_group_new.dn, [(ldap.MOD_ADD, "uniqueMember", ldap_user.dn)])
     else:
-        logger.info("Skipping LDAP update of group add uniqueMember - already updated")
+        logger.warn("Skipping LDAP update of group add uniqueMember - already updated")
 
     if ldap_user.dn in ldap_group_old.uniqueMember:
         logger.info("LDAP delete from %s uniqueMember=%s", ldap_group_old.dn, ldap_user.dn)
         local_ldap.modify(ldap_group_old.dn, [(ldap.MOD_DELETE, "uniqueMember", ldap_user.dn)])
     else:
-        logger.info("Skipping LDAP update of group delete uniqueMember - already updated")
+        logger.warn("Skipping LDAP update of group delete uniqueMember - already updated")
 
     ## Update SLURM
     _slurm_account = account["primary_group"]["alias"]
@@ -209,8 +210,8 @@ def main():
         logger.warn("Skipping SLURM account modifications - record already exists")
 
     ## Update permissions of $HOME and $SCRATCH
-    home_path = os.path.join("/home", args.username)
-    scratch_path = os.path.join("/fdata/scratch", args.username)
+    home_path = os.path.join(_account_home_config.get("base_dir"), args.username)
+    scratch_path = os.path.join(_account_home_config.get("scratch_base"), args.username)
     find_home_args = [
         home_path, "-group", args.old_group, "-exec", "chgrp", args.new_group, '{}', ';'
     ]
