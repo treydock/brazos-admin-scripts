@@ -30,8 +30,8 @@ def cmp_start_end_suspended_time(start, end, suspend, debug=False):
 TODAY = date.today()
 LAST_MONTH = TODAY - relativedelta(months=1)
 LAST_DAY_OF_MONTH=monthrange(LAST_MONTH.year, LAST_MONTH.month)[1]
-DEFAULT_STARTTIME="%s-%s-01T00:00:00" % (LAST_MONTH.year, LAST_MONTH.month)
-DEFAULT_ENDTIME="%s-%s-%sT23:59:59" % (LAST_MONTH.year, LAST_MONTH.month, LAST_DAY_OF_MONTH)
+DEFAULT_STARTTIME="%s-%02d-01T00:00:00" % (LAST_MONTH.year, LAST_MONTH.month)
+DEFAULT_ENDTIME="%s-%02d-%sT23:59:59" % (LAST_MONTH.year, LAST_MONTH.month, LAST_DAY_OF_MONTH)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--account', help="SLURM account", default=None)
