@@ -81,10 +81,10 @@ def main():
     logger.debug("LDAP user: %s", json.dumps(user_results))
 
     if len(new_group_results) != 1 or len(old_group_results) != 1:
-        logger.error("More than one group LDAP result returned")
+        logger.error("Incorrect number of LDAP group results returned")
         sys.exit(1)
     if len(user_results) != 1:
-        logger.error("More than one user LDAP result returned")
+        logger.error("Incorrect number of LDAP user results returned")
         sys.exit(1)
 
     ldap_group_new = LdapGroup()
@@ -120,12 +120,19 @@ def main():
         logger.error("LDAP user %s does not have all necessary information", args.username)
 
     ## Update account management database
-    get_group_params = {
+    get_old_group_params = {
+        "name": args.old_group,
+    }
+    old_group_data = actmgr_api.get_groups(_url, _json_headers, get_old_group_params)
+    old_group = old_group_data[0]
+    logger.debug("Old Group API data: %s", json.dumps(old_group))
+
+    get_new_group_params = {
         "name": args.new_group,
     }
-    group_data = actmgr_api.get_groups(_url, _json_headers, get_group_params)
-    group = group_data[0]
-    logger.debug("Group API data: %s", json.dumps(group))
+    new_group_data = actmgr_api.get_groups(_url, _json_headers, get_new_group_params)
+    new_group = new_group_data[0]
+    logger.debug("New Group API data: %s", json.dumps(new_group))
 
     get_account_params = {
         "username": args.username,
@@ -135,8 +142,18 @@ def main():
     logger.debug("Account API data: %s", json.dumps(account))
 
     update_account_data = {
-        "primary_group_id": group['id'],
+        "primary_group_id": new_group['id'],
     }
+    # Handle cases where person is assigned old group in both primary and auxiliary groups
+    group_ids = []
+    for g in account["groups"]:
+        if g["id"] == old_group["id"]:
+            group_ids.append(new_group["id"])
+        else:
+            group_ids.append(g["id"])
+    if group_ids:
+        update_account_data['group_ids'] = group_ids
+
     account = actmgr_api.update_account(_url, _json_headers, account['id'], update_account_data)
     if not account or not account["account"]:
         logger.error("Failed to update account management data")
