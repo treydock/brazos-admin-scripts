@@ -4,6 +4,7 @@
     * [Maintenance Scripts](#maintenance-scripts)
         * [cleanup_disabled_accounts.py](#cleanup_disabled_accountspy)
         * [change-primary-group.py](#change-primary-grouppy)
+        * [sync-zfs-quotas.py](#sync-zfs-quotaspy)
     * [SLURM Scripts](#slurm-scripts)
         * [sacct-account-summary.py](#sacct-account-summarypy)
         * [sacct-cpu-hours.py](#sacct-cpu-hourspy)
@@ -62,6 +63,18 @@ Changes the primary GID of an account.  This will perform the following updates
 Example execution:
 
     ./python-env/bin/python ./maintenance-scripts/change-primary-group.py --username treydock-test1 --new-group general --old-group acad1
+
+##### `sync-zfs-quotas.py`
+
+Sync the ZFS quota information from LDAP to the local ZFS filesystem (tank/home).
+
+Run command without making changes and only reporting information
+
+    ./python-env/bin/python ./maintenance-scripts/sync-zfs-quotas.py --noop
+
+Run command applying any necessary changes to ZFS quotas
+
+    ./python-env/bin/python ./maintenance-scripts/sync-zfs-quotas.py
 
 ### SLURM Scripts
 
