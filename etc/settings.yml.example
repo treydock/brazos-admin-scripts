@@ -22,14 +22,18 @@ defaults: &defaults
       - '/fdata/parallel6'
     cleanup_exclude:
       - 'treydock-test1'
-    ldap:
-      url:
-        - 'ldap://LDAP_SERVER1'
-        - 'ldap://LDAP_SERVER2'
-      tls: true
-      # Comment out bind_dn and bind_pass to do anonymous binds
-      bind_dn: 'cn=Directory Manager'
-      bind_pass: 'CHANGEME'
+  ldap:
+    url:
+      - 'ldap://LDAP_SERVER1'
+      - 'ldap://LDAP_SERVER2'
+    tls: true
+    # Comment out bind_dn and bind_pass to do anonymous binds
+    bind_dn: 'cn=Directory Manager'
+    bind_pass: 'CHANGEME'
+  pulp:
+    hostname: repo01.brazos.tamu.edu
+    username: admin
+    password: CHANGEME
 
 development:
   <<: *defaults

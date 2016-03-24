@@ -15,6 +15,11 @@
     * [Node Scripts](#node-scripts)
         * [update_slurm.sh](#update_slurmsh)
         * [sync_slurm_conf.sh](#sync_slurm_confsh)
+    * [Pulp Scripts](#pulp-scripts)
+        * [repos.py](#repospy)
+        * [content.py](#contentpy)
+        * [tasks.py](#taskspy)
+        * [cleanup.py](#cleanuppy)
 
 ## Install
 
@@ -143,3 +148,57 @@ Update SLURM on compute nodes and restart SLURM service.  Intended to be run via
 Update SLURM config files from shared location.  Updates slurm.conf, nodes.conf, partitions.conf and cgroup.conf.
 
     clush -g all -b '/path/to/node-scripts/sync_slurm_conf.sh /home/admin/etc/slurm-node'
+
+### Pulp Scripts
+
+##### `repos.py`
+
+This script is a used to query repos currently in Pulp.
+
+Query all repos:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/repos.py list
+
+Query a specific repo:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/repos.py list --repo test-osg33-el6
+
+Query details about all repos (or specific repo using --repo flag):
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/repos.py list --details
+
+##### `content.py`
+
+This script is used to query content of specific repos.
+
+List content of a specific repo:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/content.py list brazos-el6
+
+List specific content of a specific repo:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/content.py list brazos-el6 --match slurm
+
+Show a diff between two repos:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/content.py diff --from-repo-id=test-osg32-el6 --to-repo-id=osg32-el6 --show-diff
+
+##### `tasks.py`
+
+This script will query Pulp tasks.
+
+List all tasks:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/tasks.py list
+
+List all tasks with waiting or skipped state:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/tasks.py list --list-state waiting skipped
+
+##### `cleanup.py`
+
+This script was intended to cleanup repos.  In practice it did not work, so the script currently just prints data.
+
+Remove packages from brazos-centos-6-base that are not in centos-6-base, attempt to make brazos-centos-6-base have same packages as centos-6-base:
+
+    ./python-env/bin/python -W ignore ./pulp-scripts/cleanup.py removeold --from-repo-id centos-6-base --to-repo-id=brazos-centos-6-base
