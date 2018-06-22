@@ -21,12 +21,12 @@ from lib.byte_converter import bytes2human
 logger = logging.getLogger()
 
 # Get /fdata usage from quota reports
-FHGFS_USED = {}
-if os.path.isfile('/tmp/fhgfs_userspace.json'):
-    with open('/tmp/fhgfs_userspace.json') as _json_file:
-        _fhgfs_used = json.load(_json_file)
-    for _user in _fhgfs_used:
-        FHGFS_USED[_user["name"]] = int(_user["space"])
+BEEGFS_USED = {}
+if os.path.isfile('/tmp/beegfs_userspace.json'):
+    with open('/tmp/beegfs_userspace.json') as _json_file:
+        _beegfs_used = json.load(_json_file)
+    for _user in _beegfs_used:
+        BEEGFS_USED[_user["name"]] = int(_user["space"])
 FDATA_USERS = []
 
 
@@ -53,9 +53,9 @@ def get_space_used(path, host=None):
     if "/fdata" in path:
         if _user in FDATA_USERS:
             return 0
-        if _user in FHGFS_USED:
+        if _user in BEEGFS_USED:
             FDATA_USERS.append(_user)
-            return int(FHGFS_USED[_user])
+            return int(BEEGFS_USED[_user])
     # If the above methods failed for some reason, use du
     logger.debug1("Executing: du -s -x %s", path)
     _du_out = du("-s", "-x", path)
